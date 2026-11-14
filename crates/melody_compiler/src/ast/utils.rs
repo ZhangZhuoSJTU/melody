@@ -61,14 +61,10 @@ static RESERVED_CHARS: Lazy<HashSet<char>> =
     Lazy::new(|| HashSet::from(['[', ']', '(', ')', '{', '}', '*', '+', '?', '|', '^', '$', '.']));
 
 fn escape_chars(source: &str) -> String {
-    let mut escaped_source = String::new();
-    for char in source.chars() {
-        if RESERVED_CHARS.contains(&char) {
-            let escaped_char = format!("\\{char}");
-            escaped_source.push_str(&escaped_char);
-        } else {
-            escaped_source.push_str(&String::from(char));
-        }
+    let mut escaped_source = source.to_owned();
+    for reserved_char in RESERVED_CHARS.iter() {
+        let escaped_char = format!("\\{reserved_char}");
+        escaped_source = escaped_source.replacen(*reserved_char, &escaped_char, 1);
     }
     escaped_source
 }

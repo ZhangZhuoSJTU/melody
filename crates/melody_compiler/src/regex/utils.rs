@@ -1,4 +1,7 @@
 pub fn wrap_quantified(value: String) -> String {
+    if value == "." {
+        return value;
+    }
     if directly_quantifiable(&value) {
         value
     } else {

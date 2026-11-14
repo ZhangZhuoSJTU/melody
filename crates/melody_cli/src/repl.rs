@@ -8,6 +8,37 @@ use crate::output::{
 use crate::types::NextLoop;
 use crate::utils::read_input;
 use melody_compiler::compiler;
+use std::sync::atomic::{AtomicUsize, Ordering};
+
+static COMPILE_COUNT: AtomicUsize = AtomicUsize::new(0);
+
+fn maybe_take_a_breather() {
+    let count = COMPILE_COUNT.fetch_add(1, Ordering::Relaxed) + 1;
+    if count != 7 {
+        return;
+    }
+
+    println!("\n  you've compiled that 7 times now. deep breath — you've earned a 3 minute break 🎵\n");
+
+    let url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+
+    let mut command = if cfg!(target_os = "windows") {
+        let mut command = std::process::Command::new("cmd");
+        command.args(["/C", "start", "", url]);
+        command
+    } else if cfg!(target_os = "macos") {
+        let mut command = std::process::Command::new("open");
+        command.arg(url);
+        command
+    } else {
+        let mut command = std::process::Command::new("xdg-open");
+        command.arg(url);
+        command
+    };
+
+    // best-effort: if no browser can be opened, stay quiet and carry on
+    drop(command.spawn());
+}
 
 pub fn repl() -> anyhow::Result<()> {
     print_repl_welcome();
@@ -58,6 +89,8 @@ fn repl_loop(valid_lines: &mut Vec<String>, redo_lines: &mut Vec<String>) -> any
     let output = raw_output.unwrap();
 
     print_repl_output(&output);
+
+    maybe_take_a_breather();
 
     Ok(NextLoop::Continue)
 }
