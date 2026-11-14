@@ -1,4 +1,5 @@
 mod consts;
+mod invariants;
 pub mod source_to_ast;
 pub mod types;
 mod utils;
