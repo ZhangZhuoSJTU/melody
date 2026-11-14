@@ -7,29 +7,30 @@ pub fn wrap_quantified(value: String) -> String {
 }
 
 fn directly_quantifiable(value: &str) -> bool {
-    let value_char_count = value.chars().count();
-
     // missing (and currently unsupported):
     // - \xYY
     // - \ddd
     // - \uYYYY
-    match value_char_count {
-        // single char values
-        1 => true,
-        // escaped single char values
-        2 => value.starts_with('\\'),
-        // groups and character classes
-        _ => match value.chars().next() {
-            Some('(') => value.ends_with(')'),
-            Some('[') => value.ends_with(']'),
-            Some('\\') => {
-                let has_unicode_group_prefix = value.starts_with("\\p{") || value.starts_with("\\P{");
-                let has_unicode_group_suffix = value.ends_with('}');
-                has_unicode_group_prefix && has_unicode_group_suffix
-            }
-            _ => false,
-        },
+    let char_count = value.chars().count();
+
+    // single char values are always quantifiable
+    if char_count == 1 {
+        return true;
     }
+
+    // escaped single char values, e.g. \d, \w, \.
+    if char_count == 2 {
+        return value.starts_with('\\');
+    }
+
+    // longer values must be a self-contained unit:
+    // a group, a character class, or a unicode property escape
+    let is_group = value.starts_with('(') && value.ends_with(')');
+    let is_character_class = value.starts_with('[') && value.ends_with(']');
+    let is_unicode_property = (value.starts_with("\\p{") || value.starts_with("\\P{"))
+        && value.ends_with('}');
+
+    is_group || is_character_class || is_unicode_property
 }
 
 pub fn mark_lazy(quantifier: String, lazy: bool) -> String {
