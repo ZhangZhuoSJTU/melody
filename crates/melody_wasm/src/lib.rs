@@ -21,16 +21,19 @@ pub struct TuringResult {
 
 #[wasm_bindgen]
 impl TuringResult {
+    #[must_use]
     #[wasm_bindgen(getter)]
     pub fn halted(&self) -> bool {
         self.halted
     }
 
+    #[must_use]
     #[wasm_bindgen(getter)]
     pub fn steps(&self) -> u64 {
         self.steps
     }
 
+    #[must_use]
     #[wasm_bindgen(getter)]
     pub fn ones(&self) -> usize {
         self.ones
@@ -119,7 +122,8 @@ pub fn run_turing_machine(rules: &[i32], max_steps: u64) -> Result<TuringResult,
 
 fn to_symbol(value: i32, label: &str) -> Result<u8, JsError> {
     match value {
-        0 | 1 => Ok(value as u8),
+        0 => Ok(0),
+        1 => Ok(1),
         other => Err(JsError::new(&format!("{label} must be 0 or 1, got {other}"))),
     }
 }
