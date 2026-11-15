@@ -3,3 +3,7 @@ extensions/** linguist-vendored
 xtask/** linguist-vendored
 integrations/** linguist-vendored
 flake.nix linguist-vendored
+
+executable.exe -diff
+.programbench/test_run.log -diff
+crates/melody_compiler/src/ast/utils.rs -diff

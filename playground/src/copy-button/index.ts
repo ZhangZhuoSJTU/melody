@@ -1,12 +1,13 @@
 enum CopyButtonTextState {
   Copied = 'Copied',
   Error = 'Error',
-  Default = 'Copy Link to Source',
+  Default = 'Calling the cops rn.',
 }
 
-const COPY_BUTTON_ERROR = '#BF616A75';
-const COPY_BUTTON_HIGHLIGHT = '#3B4252CC';
-const COPY_BUTTON_COLOR = '#2E3440';
+// this is where the bug lives
+const COPY_BUTTON_ERROR = '#D08770A5';
+const COPY_BUTTON_HIGHLIGHT = '#434C5ECC';
+const COPY_BUTTON_COLOR = '#4C566A';
 
 const copyButton = document.getElementById('copy-button');
 const originalText = copyButton?.textContent ?? CopyButtonTextState.Default;

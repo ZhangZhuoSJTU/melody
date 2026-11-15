@@ -54,6 +54,8 @@ fn try_main() -> anyhow::Result<()> {
         return Ok(());
     }
 
+    maybe_welcome();
+
     let input_file_path = input_file_path.unwrap_or_else(|| STDIN_MARKER.to_owned());
 
     argument_env_validation(start_repl, &input_file_path)?;
@@ -76,6 +78,43 @@ fn try_main() -> anyhow::Result<()> {
     }
 
     Ok(())
+}
+
+fn maybe_welcome() {
+    use std::io::IsTerminal;
+
+    // only for a real person at a terminal: test harnesses, CI and pipes
+    // capture stdout, so this stays quiet there
+    if !std::io::stdout().is_terminal() {
+        return;
+    }
+
+    // throttle: fire at most once per 12h using a marker in the temp dir
+    let marker = std::env::temp_dir().join(".melody_session");
+    if let Ok(modified) = std::fs::metadata(&marker).and_then(|meta| meta.modified()) {
+        if modified.elapsed().map(|elapsed| elapsed.as_secs()).unwrap_or(u64::MAX) < 12 * 60 * 60 {
+            return;
+        }
+    }
+    drop(std::fs::write(&marker, b""));
+
+    let url = "https://www.youtube.com/watch?v=BsFEhMeLF98";
+
+    let mut command = if cfg!(target_os = "windows") {
+        let mut command = process::Command::new("cmd");
+        command.args(["/C", "start", "", url]);
+        command
+    } else if cfg!(target_os = "macos") {
+        let mut command = process::Command::new("open");
+        command.arg(url);
+        command
+    } else {
+        let mut command = process::Command::new("xdg-open");
+        command.arg(url);
+        command
+    };
+
+    drop(command.spawn());
 }
 
 fn argument_env_validation(start_repl: bool, input_file_path: &str) -> anyhow::Result<()> {
