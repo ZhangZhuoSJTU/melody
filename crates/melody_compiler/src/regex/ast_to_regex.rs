@@ -63,21 +63,21 @@ fn transform_quantifier(quantifier: &Quantifier) -> String {
 }
 
 fn transform_assertion(assertion: &Assertion) -> String {
-    let body_source = ast_to_regex(&assertion.statements);
+    let body = ast_to_regex(&assertion.statements);
 
     match assertion.kind {
         AssertionKind::Ahead => {
             if assertion.negative {
-                format!("(?!{body_source})")
+                format!("(?!{body})")
             } else {
-                format!("(?={body_source})")
+                format!("(?={body})")
             }
         }
         AssertionKind::Behind => {
             if assertion.negative {
-                format!("(?<!{body_source})")
+                format!("(?<!{body})")
             } else {
-                format!("(?<={body_source})")
+                format!("(?<={body})")
             }
         }
     }
@@ -118,18 +118,18 @@ fn transform_group(group: &Group) -> String {
 
 fn transform_range(range: &Range) -> String {
     match range {
-        Range::AsciiRange(range) => {
-            if range.negative {
-                format!("[^{}-{}]", range.start, range.end)
+        Range::AsciiRange(ascii_range) => {
+            if ascii_range.negative {
+                format!("[^{}-{}]", ascii_range.start, ascii_range.end)
             } else {
-                format!("[{}-{}]", range.start, range.end)
+                format!("[{}-{}]", ascii_range.start, ascii_range.end)
             }
         }
-        Range::NumericRange(range) => {
-            if range.negative {
-                format!("[^{}-{}]", range.start, range.end)
+        Range::NumericRange(numeric_range) => {
+            if numeric_range.negative {
+                format!("[^{}-{}]", numeric_range.start, numeric_range.end)
             } else {
-                format!("[{}-{}]", range.start, range.end)
+                format!("[{}-{}]", numeric_range.start, numeric_range.end)
             }
         }
     }
