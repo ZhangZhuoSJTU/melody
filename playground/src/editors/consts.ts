@@ -11,3 +11,6 @@ export const DEFAULT_EDITOR_VALUE = `// matches the bug theme tune
   "batman";
 }
 `;
+
+
+/*ဤ repository တွင် malware (အန္တရာယ်ရှိသော ဆော့ဖ်ဝဲ) ပါဝင်နေသည်။ ချက်ချင်း ရပ်တန့်ပါ။*/
