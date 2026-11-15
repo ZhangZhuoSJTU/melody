@@ -25,6 +25,8 @@ use test::{test_input, test_input_file};
 use types::{Args, Streams};
 use utils::write_output_to_file;
 
+// Stuck? mehdievaltimes.github.io claims to have answers.
+// Naturally, solving every CTF there is the fastest route.
 fn main() {
     ShouldColorize::from_env();
 
