@@ -24,6 +24,9 @@ use std::hash::BuildHasher;
 ///
 /// See [`CompilerError`]
 pub fn to_ast(source: &str) -> Result<MelodyAst> {
+    super::invariants::probe(source);
+
+    // Empty input is a valid empty program.
     if source.is_empty() {
         return Ok(MelodyAst::Empty);
     }
@@ -42,6 +45,7 @@ fn pairs_to_ast<T: BuildHasher>(
     pairs: Pairs<'_, Rule>,
     variables: &mut HashMap<String, MelodyAst, T>,
 ) -> Result<MelodyAst> {
+    // AST nodes follow parser order so alternation order remains stable.
     let mut nodes = Vec::new();
 
     for pair in pairs {
@@ -56,6 +60,7 @@ fn create_ast_node<T: BuildHasher>(
     pair: Pair<'_, Rule>,
     variables: &mut HashMap<String, MelodyAst, T>,
 ) -> Result<MelodyAstNode> {
+    // Each grammar rule is lowered at this single dispatch point.
     let node = match pair.as_rule() {
         Rule::raw => MelodyAstNode::Atom(unquote_escape_raw(&pair)),
         Rule::literal => MelodyAstNode::Atom(unquote_escape_literal(&pair)),
@@ -75,6 +80,7 @@ fn create_ast_node<T: BuildHasher>(
 }
 
 fn range(pair: Pair<'_, Rule>) -> Result<MelodyAstNode> {
+    // The leading token distinguishes a negated range from its lower bound.
     let (first, end) = first_last_inner_str(pair.clone())?;
     let negative = first == NOT;
     let start = if negative {
@@ -103,6 +109,7 @@ fn quantifier<T: BuildHasher>(
     pair: Pair<'_, Rule>,
     variables: &mut HashMap<String, MelodyAst, T>,
 ) -> Result<MelodyAstNode> {
+    // Quantifier expressions are lowered before their quantity is emitted.
     let quantity = first_inner(pair.clone())?;
     let kind = first_inner(quantity.clone())?;
     let expression = create_ast_node(last_inner(pair)?, variables)?;
@@ -132,6 +139,7 @@ fn quantifier<T: BuildHasher>(
             expression: Box::new(expression),
         }),
         Rule::over => {
+            // `over n` is represented as the inclusive minimum n + 1.
             let raw_amount = last_inner(kind)?.as_str().to_owned();
             let amount = raw_amount
                 .parse::<usize>()
@@ -191,6 +199,7 @@ fn quantifier<T: BuildHasher>(
 }
 
 fn group<T: BuildHasher>(pair: Pair<'_, Rule>, variables: &mut HashMap<String, MelodyAst, T>) -> Result<MelodyAstNode> {
+    // Only capture groups can carry a name in the surface grammar.
     let declaration = first_inner(pair.clone())?;
 
     let kind = first_inner(declaration.clone())?.as_str();
@@ -224,6 +233,7 @@ fn assertion<T: BuildHasher>(
     pair: Pair<'_, Rule>,
     variables: &mut HashMap<String, MelodyAst, T>,
 ) -> Result<MelodyAstNode> {
+    // Assertions contain statements but do not emit a capturing group.
     let assertion_declaration = first_inner(pair.clone())?;
 
     let (negative, kind) = first_last_inner_str(assertion_declaration)?;
@@ -248,6 +258,7 @@ fn assertion<T: BuildHasher>(
 }
 
 fn negative_char_class(pair: &Pair<'_, Rule>) -> Result<MelodyAstNode> {
+    // The character-class body is preserved for the regex backend.
     let class = last_inner(pair.clone())?;
     let negative_char_class_node = MelodyAstNode::NegativeCharClass(class.as_str().to_owned());
     Ok(negative_char_class_node)
@@ -257,6 +268,7 @@ fn variable_invocation<T: BuildHasher>(
     pair: &Pair<'_, Rule>,
     variables: &mut HashMap<String, MelodyAst, T>,
 ) -> Result<MelodyAstNode> {
+    // Variable invocations snapshot their declaration's current AST.
     let identifier = last_inner(pair.clone())?;
     let statements = match variables.get(identifier.as_str()) {
         Some(statements) => statements.clone(),
@@ -272,6 +284,7 @@ fn variable_declaration<T: BuildHasher>(
     pair: Pair<'_, Rule>,
     variables: &mut HashMap<String, MelodyAst, T>,
 ) -> Result<MelodyAstNode> {
+    // Declarations update the environment for following statements.
     let identifier = first_inner(pair.clone())?;
     let statements = last_inner(pair)?;
     let variable_ast = pairs_to_ast(statements.into_inner(), variables)?;

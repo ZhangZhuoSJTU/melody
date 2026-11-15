@@ -30,6 +30,7 @@ pub fn nth_inner(pair: Pair<'_, Rule>, n: usize) -> Option<Pair<'_, Rule>> {
 }
 
 pub fn to_char(value: &str) -> Result<char> {
+    // Range endpoints keep their source spelling until this conversion.
     let char = value.chars().next().ok_or(CompilerError::MissingNode)?;
 
     Ok(char)
@@ -40,6 +41,7 @@ pub fn alphabetic_first_char(value: &str) -> Result<bool> {
 }
 
 pub fn unquote_escape_raw(pair: &Pair<'_, Rule>) -> String {
+    // Raw literals have their delimiters stripped before regex escaping.
     let pair_str = pair.as_str();
     pair_str[1..pair_str.len() - 1].replace(r"\`", "`")
 }
@@ -61,6 +63,7 @@ static RESERVED_CHARS: Lazy<HashSet<char>> =
     Lazy::new(|| HashSet::from(['[', ']', '(', ')', '{', '}', '*', '+', '?', '|', '^', '$', '.']));
 
 fn escape_chars(source: &str) -> String {
+    // Keep the reserved set centralized so literal output stays predictable.
     let mut escaped_source = String::new();
     for char in source.chars() {
         if RESERVED_CHARS.contains(&char) {

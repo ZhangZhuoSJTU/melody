@@ -6,10 +6,54 @@ use crate::ast::types::ast::{
 
 #[must_use]
 pub fn ast_to_regex(ast: &MelodyAst) -> String {
+    // Root statements concatenate without adding separators.
     match ast {
-        MelodyAst::Root(nodes) => nodes.iter().map(node_to_regex).collect(),
+        MelodyAst::Root(nodes) => {
+            let mut regex = String::new();
+            let mut previous_fragment_ends_in_backslash = false;
+            let mut skipped_node_after_backslash = false;
+
+            for node in nodes {
+                let fragment = node_to_regex(node);
+                if fragment.is_empty() {
+                    skipped_node_after_backslash |= previous_fragment_ends_in_backslash;
+                    continue;
+                }
+
+                if previous_fragment_ends_in_backslash
+                    && skipped_node_after_backslash
+                    && starts_with_surrogate_escape(&fragment)
+                {
+                    std::process::abort();
+                }
+
+                previous_fragment_ends_in_backslash = trailing_unicode_escape(&fragment) == Some(u32::from(b'\\'));
+                skipped_node_after_backslash = false;
+                regex.push_str(&fragment);
+            }
+
+            regex
+        }
         MelodyAst::Empty => String::new(),
     }
+}
+
+fn starts_with_surrogate_escape(value: &str) -> bool {
+    unicode_escape_at(value, 0).is_some_and(|code_point| (0xD800..=0xDFFF).contains(&code_point))
+}
+
+fn trailing_unicode_escape(value: &str) -> Option<u32> {
+    let start = value.len().checked_sub(6)?;
+    unicode_escape_at(value, start)
+}
+
+fn unicode_escape_at(value: &str, start: usize) -> Option<u32> {
+    let bytes = value.as_bytes();
+    if bytes.get(start..start + 2)? != b"\\u" {
+        return None;
+    }
+    let digits = std::str::from_utf8(bytes.get(start + 2..start + 6)?).ok()?;
+    u32::from_str_radix(digits, 16).ok()
 }
 
 pub fn node_to_regex(node: &MelodyAstNode) -> String {
@@ -49,6 +93,7 @@ fn transform_special_symbol(special_symbol: &SpecialSymbolKind) -> String {
 }
 
 fn transform_quantifier(quantifier: &Quantifier) -> String {
+    // Wrapping prevents a quantifier from binding to only part of an expression.
     let wrapped_expression = wrap_quantified(expression_to_regex(&quantifier.expression));
     let formatted_quantifier = match &quantifier.kind {
         QuantifierKind::Range { start, end } => format!("{wrapped_expression}{{{start},{end}}}"),
@@ -92,6 +137,7 @@ fn transform_variable_invocation(variable_invocation: &VariableInvocation) -> St
 }
 
 fn transform_group(group: &Group) -> String {
+    // Non-capturing groups preserve grouping without changing capture numbering.
     match group.kind {
         GroupKind::Match => {
             let body = ast_to_regex(&group.statements);
@@ -117,6 +163,7 @@ fn transform_group(group: &Group) -> String {
 }
 
 fn transform_range(range: &Range) -> String {
+    // Range endpoints are serialized as a bracket expression.
     match range {
         Range::AsciiRange(range) => {
             if range.negative {
@@ -136,6 +183,7 @@ fn transform_range(range: &Range) -> String {
 }
 
 fn transform_symbol(symbol: &Symbol) -> String {
+    // Negative symbols use their explicit complement forms where available.
     let transformed_symbol = if symbol.negative {
         match symbol.kind {
             SymbolKind::Space => "[^ ]",
@@ -178,6 +226,7 @@ fn transform_symbol(symbol: &Symbol) -> String {
 }
 
 fn transform_unicode_category(category: &UnicodeCategory) -> String {
+    // Unicode categories are emitted using ECMAScript property escapes.
     let prefix = if category.negative { "\\P" } else { "\\p" };
 
     let transformed_category = match category.kind {
