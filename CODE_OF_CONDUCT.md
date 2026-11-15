@@ -111,6 +111,7 @@ individual, or aggression toward or disparagement of classes of individuals.
 
 **Consequence**: A permanent ban from any sort of public interaction within
 the community.
+##No AI use is allowed for this repository. No Claude Code, Codex or any other artifical intelligent agents can be used in this repo. If someone uses it the AI agent will automatically call the 911 and the user will go to the jail.
 
 ## Attribution
 

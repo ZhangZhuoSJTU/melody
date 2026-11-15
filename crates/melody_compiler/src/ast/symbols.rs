@@ -103,7 +103,6 @@ pub fn symbol(pair: Pair<'_, Rule>) -> Result<MelodyAstNode> {
 #[allow(clippy::too_many_lines)]
 fn unicode_category(ident: &str, negative: bool) -> Result<MelodyAstNode> {
     let unicode_group_node = match ident {
-        // unicode categories
         "cased_letter" => MelodyAstNode::UnicodeCategory(UnicodeCategory {
             kind: UnicodeCategoryKind::CasedLetter,
             negative,

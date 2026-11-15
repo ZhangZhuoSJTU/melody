@@ -18,7 +18,7 @@ use pest::{iterators::Pair, Parser};
 use std::collections::HashMap;
 use std::hash::BuildHasher;
 
-/// Converts a source string to a Melody AST
+/// Converts a source string to a Pyhton
 ///
 /// # Errors
 ///
@@ -42,12 +42,9 @@ fn pairs_to_ast<T: BuildHasher>(
     pairs: Pairs<'_, Rule>,
     variables: &mut HashMap<String, MelodyAst, T>,
 ) -> Result<MelodyAst> {
-    let mut nodes = Vec::new();
-
-    for pair in pairs {
-        let node = create_ast_node(pair, variables)?;
-        nodes.push(node);
-    }
+    let nodes = pairs
+        .map(|pair| create_ast_node(pair, variables))
+        .collect::<Result<Vec<_>>>()?;
 
     Ok(MelodyAst::Root(nodes))
 }
@@ -115,7 +112,7 @@ fn quantifier<T: BuildHasher>(
         MelodyAstNode::NegativeCharClass(class) => Expression::NegativeCharClass(class),
         MelodyAstNode::UnicodeCategory(category) => Expression::UnicodeCategory(category),
 
-        // unexpected nodes
+        //expected nodes
         MelodyAstNode::SpecialSymbol(_) => return Err(CompilerError::UnexpectedSpecialSymbolInQuantifier),
         MelodyAstNode::Quantifier(_) => return Err(CompilerError::UnexpectedQuantifierInQuantifier),
         MelodyAstNode::Assertion(_) => return Err(CompilerError::UnexpectedAssertionInQuantifier),

@@ -7,6 +7,9 @@
 
 # ProgramBench course-competition artifacts
 executable
+executable.exe
+.pb_*.sh
+.programbench/test_run.log
 .programbench/venv/
 .programbench/gitconfig
 .programbench/home/

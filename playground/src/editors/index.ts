@@ -9,7 +9,6 @@ import { DEFAULT_EDITOR_SETTINGS } from './editor-settings';
 import { languageDefinition } from './language-definition';
 import { nordTheme } from './nord-theme';
 // build from ../crates/melody_wasm included manually due to issues with wasm-bindgen (similar to https://github.com/rustwasm/wasm-bindgen/issues/113)
-// run `cargo xtask wasm playground` to generate
 import init, { compiler } from '../../wasm/melody_wasm';
 
 window.MonacoEnvironment = {
